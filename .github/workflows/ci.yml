@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-c:
+    name: Build C Example
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y gcc make
+      - name: Build C example
+        run: cd examples/C && make
+
+  build-cpp:
+    name: Build C++ Example
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y g++ make
+      - name: Build C++ example
+        run: cd examples/Cpp && make
+        env:
+          CXX: g++
+          CC: gcc
+
+  lint-python:
+    name: Lint Python
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+      - name: Install dependencies
+        run: pip install pyserial flake8
+      - name: Lint with flake8
+        run: flake8 lib/Python/ examples/Python/ --max-line-length=120
+
+  format-check:
+    name: Check C/C++ Formatting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uncrustify
+        run: sudo apt-get update && sudo apt-get install -y uncrustify
+      - name: Run format check
+        run: |
+          cp -r lib/ lib_backup/
+          cp -r examples/ examples_backup/
+          ./utilities/format.sh
+          diff -r lib/ lib_backup/
+          diff -r examples/ examples_backup/
